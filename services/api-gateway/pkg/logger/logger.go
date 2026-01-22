@@ -1,10 +1,9 @@
 package logger
 
 import (
+	"gitlab.com/4uvirik/my-platform/services/api-gateway/pkg/logger/handler/slogpretty"
 	"log/slog"
 	"os"
-
-	"github.com/4uvirik/ProductService/pkg/logger/handler/slogpretty"
 )
 
 const (
