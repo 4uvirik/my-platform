@@ -1,2 +1,2 @@
-../../.idea/
-services/api-gateway/.env
+.idea/
+.env
