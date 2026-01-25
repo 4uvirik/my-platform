@@ -1,26 +1,43 @@
 package main
 
 import (
-	"fmt"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/config"
+	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/app"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/pkg/logger"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 )
 
 func main() {
-	fmt.Println("api-gateway starting...")
-
 	cfg := initConfig()
 
-	logger := initLogger(cfg)
+	log := initLogger(cfg)
 
-	slog.SetDefault(logger)
+	slog.SetDefault(log)
 	slog.Info("logger initialized",
 		"env", cfg.App.Env,
 		"port", cfg.Server.Port,
 	)
+
+	router := http.NewServeMux()
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	app := app.New(
+		cfg.Server.Addr(),
+		router,
+		log,
+	)
+
+	log.Info("starting api-gateway")
+
+	if err := app.Run(); err != nil {
+		log.Error("httpserver server stopped", "error", err)
+	}
+
 }
 
 // initConfig - загрузка и настройка конфига.
@@ -41,13 +58,13 @@ func initConfig() *config.Config {
 
 // initLogger - загрузка и настройка логера.
 func initLogger(cfg *config.Config) *slog.Logger {
-	logger, err := logger.ConfigLogger(cfg.Logger.Level)
+	log, err := logger.ConfigLogger(cfg.Logger.Level)
 	if err != nil {
 		slog.Error("failed to load config", "error", err)
 		return nil
 	}
 
-	logger.Debug("configuration reading success", slog.Any("cfg", cfg))
+	log.Debug("configuration reading success", slog.Any("cfg", cfg))
 
-	return logger
+	return log
 }

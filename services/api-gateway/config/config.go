@@ -5,6 +5,7 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
+	"net"
 	"os"
 	"time"
 )
@@ -28,6 +29,11 @@ type ServerConfig struct {
 
 type LoggerConfig struct {
 	Level string `env:"LOG_LEVEL" envDefault:"info" yaml:"level"`
+}
+
+// Addr - адрес сервера, Host:Port
+func (c ServerConfig) Addr() string {
+	return net.JoinHostPort(c.Host, c.Port)
 }
 
 // Load - загрузка конфига сначала из .env потом из yaml.
