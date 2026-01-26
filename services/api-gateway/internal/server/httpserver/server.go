@@ -26,6 +26,7 @@ func New(addr string, handler http.Handler, readTimeout time.Duration, writeTime
 }
 
 func (s *Server) Start() error {
+
 	return s.httpServer.ListenAndServe()
 }
 

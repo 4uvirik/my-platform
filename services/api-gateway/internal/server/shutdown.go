@@ -18,5 +18,7 @@ func SetupSignalContext(parent context.Context) context.Context {
 		cancel()
 	}()
 
+	defer signal.Stop(ch)
+
 	return ctx
 }

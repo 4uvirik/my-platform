@@ -1,7 +1,7 @@
-package http
+package httpserver
 
 import (
-	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/http/handlers"
+	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/server/httpserver/handlers"
 	"net/http"
 )
 

@@ -16,24 +16,26 @@ type App struct {
 	logger     *slog.Logger
 }
 
-func New(addr string, handler any, errorLogger *slog.Logger) *App {
+func New(cfg *config.Config, handler http.Handler, logger *slog.Logger) *App {
 	server := httpserver.New(
-		addr,
-		handler.(interface {
-			ServeHTTP(http.ResponseWriter, *http.Request)
-		}),
+		cfg.Server.Addr(),
+		handler,
 		5*time.Second,
 		5*time.Second,
-		errorLogger,
+		logger,
 	)
 
 	return &App{
+		cfg:        cfg,
 		httpServer: server,
+		logger:     logger,
 	}
 }
 
 func (a *App) Run(ctx context.Context) error {
 	ctx = server.SetupSignalContext(ctx)
+
+	a.logger.Info("http server started", "addr", a.cfg.Server.Addr())
 
 	go func() {
 		if err := a.httpServer.Start(); err != nil && err != http.ErrServerClosed {
@@ -48,7 +50,7 @@ func (a *App) Run(ctx context.Context) error {
 	shutDownCtx, cancel := context.WithTimeout(context.Background(), a.cfg.Server.ShutdownTimeout)
 	defer cancel()
 
-	return a.httpServer.Shutdown(shutDownCtx)
+	return a.Shutdown(shutDownCtx)
 }
 
 func (a *App) Shutdown(ctx context.Context) error {

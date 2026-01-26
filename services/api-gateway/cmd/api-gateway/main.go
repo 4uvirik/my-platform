@@ -4,10 +4,10 @@ import (
 	"context"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/config"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/app"
+	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/server/httpserver"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/pkg/logger"
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
 )
 
@@ -22,13 +22,10 @@ func main() {
 		"port", cfg.Server.Port,
 	)
 
-	router := http.NewServeMux()
-	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	router := httpserver.NewRouter()
 
 	app := app.New(
-		cfg.Server.Addr(),
+		cfg,
 		router,
 		log,
 	)
@@ -64,13 +61,12 @@ func initConfig() *config.Config {
 
 // initLogger - загрузка и настройка логера.
 func initLogger(cfg *config.Config) *slog.Logger {
-	log, err := logger.ConfigLogger(cfg.Logger.Level)
+	logger, err := logger.ConfigLogger(cfg.Logger.Level)
 	if err != nil {
-		slog.Error("failed to load config", "error", err)
-		return nil
+		log.Fatalf("failed to init logger: %v", err)
 	}
 
-	log.Debug("configuration reading success", slog.Any("cfg", cfg))
+	logger.Debug("configuration reading success", slog.Any("cfg", cfg))
 
-	return log
+	return logger
 }
