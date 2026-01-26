@@ -43,6 +43,8 @@ func (a *App) Run(ctx context.Context) error {
 
 	<-ctx.Done()
 
+	a.logger.Info("shutting down application")
+
 	shutDownCtx, cancel := context.WithTimeout(context.Background(), a.cfg.Server.ShutdownTimeout)
 	defer cancel()
 

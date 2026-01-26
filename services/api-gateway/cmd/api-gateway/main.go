@@ -42,6 +42,7 @@ func main() {
 		log.Error("application stopped wit error", "error", err)
 		os.Exit(1)
 	}
+	log.Info("http server started", "addr", cfg.Server.Addr())
 
 }
 
