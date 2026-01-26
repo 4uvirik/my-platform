@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/config"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/internal/app"
 	"gitlab.com/4uvirik/my-platform/services/api-gateway/pkg/logger"
@@ -34,8 +35,12 @@ func main() {
 
 	log.Info("starting api-gateway")
 
-	if err := app.Run(); err != nil {
-		log.Error("httpserver server stopped", "error", err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := app.Run(ctx); err != nil {
+		log.Error("application stopped wit error", "error", err)
+		os.Exit(1)
 	}
 
 }

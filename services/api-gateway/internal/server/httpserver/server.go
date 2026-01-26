@@ -29,5 +29,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	s.logger.Info("http server shutting down")
+
 	return s.httpServer.Shutdown(ctx)
 }
