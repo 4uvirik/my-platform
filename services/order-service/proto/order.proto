@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "gitlab.com/4uvirik/my-platform/services/order-service/proto;orderpb";
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrder (GetOrderRequest) returns (GetOrderResponse);
+  rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
+}
+
+message CreateOrderRequest {
+  string user_id = 1;
+  int64 amount = 2;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+}
+
+message ListOrdersRequest {
+  string user_id = 1;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  int64 amount = 3;
+  string status = 4;
+}
