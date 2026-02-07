@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/order-service/internal/kafka"
 	"log"
 	"net"
 	"os"
@@ -27,6 +28,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	producer := kafka.NewProducer(
+		cfg.Kafka.Brokers,
+		cfg.Kafka.TopicOrderCreated,
+		logger,
+	)
 
 	repo := postgres.NewOrderRepository(pool)
 	svc := service.NewOrderService(repo)
