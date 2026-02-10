@@ -1,0 +1,19 @@
+app:
+  name: order-service
+  env: local
+
+server:
+  grpc_addr: ":50051"
+  shutdown_timeout: 10s
+
+logger:
+  level: debug
+  json: true
+
+db:
+  dsn: "postgres://user:pass@localhost:5432/orders?sslmode=disable"
+
+kafka:
+  brokers: ["localhost:9092"]
+  topic_order_created: "order.created"
+  group_id: "notification-service"

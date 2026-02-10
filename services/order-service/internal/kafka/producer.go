@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -11,32 +12,47 @@ import (
 
 type Producer struct {
 	writer *kafka.Writer
+	log    *slog.Logger
+	topic  string
 }
 
-func NewProducer(brokers []string, topic string) *Producer {
-	return &Producer{
-		writer: &kafka.Writer{
-			Addr:         kafka.TCP(brokers...),
-			Topic:        topic,
-			Balancer:     &kafka.LeastBytes{},
-			RequiredAcks: kafka.RequireAll,
-		},
+func NewProducer(brokers []string, topic string, log *slog.Logger) (*Producer, error) {
+	w := &kafka.Writer{
+		Addr:         kafka.TCP(brokers...),
+		Topic:        topic,
+		Balancer:     &kafka.LeastBytes{},
+		RequiredAcks: kafka.RequireAll,
+		Async:        false,
 	}
+
+	return &Producer{writer: w, log: log, topic: topic}, nil
 }
 
 func (p *Producer) PublishOrderCreated(ctx context.Context, evt events.OrderCreated) error {
-	data, err := json.Marshal(evt)
+	b, err := json.Marshal(evt)
 	if err != nil {
 		return err
 	}
 
-	msg := kafka.Message{
+	err = p.writer.WriteMessages(ctx, kafka.Message{
 		Key:   []byte(evt.OrderID),
-		Value: data,
+		Value: b,
 		Time:  time.Now(),
+	})
+	if err != nil {
+		p.log.Error("kafka publish failed",
+			"topic", p.topic,
+			"order_id", evt.OrderID,
+			"error", err,
+		)
+		return err
 	}
 
-	return p.writer.WriteMessages(ctx, msg)
+	p.log.Info("kafka event published",
+		"topic", p.topic,
+		"order_id", evt.OrderID,
+	)
+	return nil
 }
 
 func (p *Producer) Close() error {

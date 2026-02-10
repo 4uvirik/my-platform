@@ -15,14 +15,14 @@ import (
 type OrderService struct {
 	repo     *postgres.OrderRepository
 	producer *kafka.Producer
-	logger   *slog.Logger
+	log      *slog.Logger
 }
 
-func NewOrderService(repo *postgres.OrderRepository, producer *kafka.Producer, logger *slog.Logger) *OrderService {
+func NewOrderService(repo *postgres.OrderRepository, producer *kafka.Producer, log *slog.Logger) *OrderService {
 	return &OrderService{
 		repo:     repo,
 		producer: producer,
-		logger:   logger,
+		log:      log,
 	}
 }
 
@@ -45,7 +45,7 @@ func (s *OrderService) Create(ctx context.Context, userID string, amount int64) 
 		Amount:  amount,
 		At:      time.Now().UTC(),
 	}); err != nil {
-		s.logger.Error(
+		s.log.Error(
 			"failed to publish OrderCreated event",
 			"order_id", id.String(),
 			"user_id", userID,
