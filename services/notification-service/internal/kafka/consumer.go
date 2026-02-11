@@ -14,7 +14,7 @@ type Consumer struct {
 	logger *slog.Logger
 }
 
-func NewConsumer(brokers []string, topic, groupID string, logger *slog.Logger) *Consumer {
+func NewConsumer(brokers []string, topic, groupID string, logger *slog.Logger) (*Consumer, error) {
 	return &Consumer{
 		reader: kafka.NewReader(kafka.ReaderConfig{
 			Brokers: brokers,
@@ -22,7 +22,7 @@ func NewConsumer(brokers []string, topic, groupID string, logger *slog.Logger) *
 			GroupID: groupID,
 		}),
 		logger: logger,
-	}
+	}, nil
 }
 
 func (c *Consumer) Run(ctx context.Context) error {
