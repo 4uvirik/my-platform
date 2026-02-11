@@ -2,18 +2,28 @@ package service
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/order-service/internal/kafka"
+	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 
+	"gitlab.com/4uvirik/my-platform/pkg/events"
 	"gitlab.com/4uvirik/my-platform/services/order-service/internal/repository/postgres"
 )
 
 type OrderService struct {
-	repo *postgres.OrderRepository
+	repo     *postgres.OrderRepository
+	producer *kafka.Producer
+	logger   *slog.Logger
 }
 
-func NewOrderService(repo *postgres.OrderRepository) *OrderService {
-	return &OrderService{repo: repo}
+func NewOrderService(repo *postgres.OrderRepository, producer *kafka.Producer, loggger *slog.Logger) *OrderService {
+	return &OrderService{
+		repo:     repo,
+		producer: producer,
+		logger:   loggger,
+	}
 }
 
 func (s *OrderService) Create(ctx context.Context, userID string, amount int64) (uuid.UUID, error) {
@@ -27,6 +37,20 @@ func (s *OrderService) Create(ctx context.Context, userID string, amount int64) 
 	})
 	if err != nil {
 		return uuid.Nil, err
+	}
+
+	if err := s.producer.PublishOrderCreated(ctx, events.OrderCreated{
+		OrderID: id.String(),
+		UserID:  userID,
+		Amount:  amount,
+		At:      time.Now().UTC(),
+	}); err != nil {
+		s.logger.Error(
+			"failed to publish OrderCreated event",
+			"order_id", id.String(),
+			"user_id", userID,
+			"error", err,
+		)
 	}
 
 	return id, nil

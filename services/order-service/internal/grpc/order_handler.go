@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"google.golang.org/grpc"
 
 	"github.com/google/uuid"
 
@@ -16,6 +17,10 @@ type OrderHandler struct {
 
 func NewOrderHandler(svc *service.OrderService) *OrderHandler {
 	return &OrderHandler{svc: svc}
+}
+
+func Register(server *grpc.Server, h *OrderHandler) {
+	orderpb.RegisterOrderServiceServer(server, h)
 }
 
 func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderpb.CreateOrderRequest) (*orderpb.CreateOrderResponse, error) {

@@ -1,13 +1,13 @@
 package logger
 
 import (
-	"gitlab.com/4uvirik/my-platform/services/api-gateway/pkg/logger/handler/slogpretty"
+	"gitlab.com/4uvirik/my-platform/services/user-service/pkg/logger/handler/slogpretty"
 	"log/slog"
 	"os"
 )
 
 const (
-	envLocal = "local"
+	envLocal = "local.yaml"
 	envDev   = "dev"
 	envProd  = "prod"
 )
