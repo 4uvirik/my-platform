@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/dedup"
+	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/infrastructure/redis"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gitlab.com/4uvirik/my-platform/services/notification-service/config"
 	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/kafka"
@@ -21,7 +24,25 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	consumer, err := kafka.NewConsumer(cfg.Kafka.Brokers, cfg.Kafka.TopicOrderCreated, cfg.Kafka.GroupID, logg)
+	redisClient, err := redis.NewClient(redis.Config{
+		Addr:     cfg.Redis.Addr,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+	if err != nil {
+		logg.Error("failed to init redis", "err", err)
+		os.Exit(1)
+	}
+
+	dedupSvc := dedup.NewService(redisClient, 24*time.Hour)
+
+	consumer, err := kafka.NewConsumer(
+		cfg.Kafka.Brokers,
+		cfg.Kafka.TopicOrderCreated,
+		cfg.Kafka.GroupID,
+		dedupSvc,
+		logg,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +59,14 @@ func main() {
 
 	logg.Info("notification-service shutting down")
 	cancel()
-	consumer.Close()
+
+	if err := redisClient.Close(); err != nil {
+		logg.Warn("failed to close redis", "err", err)
+	}
+
+	if err := consumer.Close(); err != nil {
+		logg.Warn("failed to close kafka consumer", "err", err)
+	}
 }
 
 func initConfig() *config.Config {

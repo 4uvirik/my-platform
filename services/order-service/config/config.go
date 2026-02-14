@@ -14,6 +14,7 @@ type Config struct {
 	Logger LoggerConfig `yaml:"logger"`
 	DB     DBConfig     `yaml:"db"`
 	Kafka  KafkaConfig  `yaml:"kafka"`
+	Redis  RedisConfig  `yaml:"redis"`
 }
 
 type AppConfig struct {
@@ -39,6 +40,12 @@ type KafkaConfig struct {
 	Brokers           []string `env:"KAFKA_BROKERS" yaml:"brokers" envSeparator:","`
 	TopicOrderCreated string   `env:"KAFKA_TOPIC_ORDER_CREATED" yaml:"topic_order_created"`
 	GroupID           string   `env:"KAFKA_GROUP_ID" yaml:"group_id"`
+}
+
+type RedisConfig struct {
+	Addr     string `env:"REDIS_ADDR" yaml:"addr" envDefault:"localhost:6379"`
+	Password string `env:"REDIS_PASSWORD" yaml:"password"`
+	DB       int    `env:"REDIS_DB" yaml:"db" envDefault:"0"`
 }
 
 func Load(path string) (*Config, error) {
