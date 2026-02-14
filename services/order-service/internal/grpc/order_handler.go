@@ -3,6 +3,9 @@ package grpc
 import (
 	"context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/google/uuid"
 
@@ -24,9 +27,20 @@ func Register(server *grpc.Server, h *OrderHandler) {
 }
 
 func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderpb.CreateOrderRequest) (*orderpb.CreateOrderResponse, error) {
-	id, err := h.svc.Create(ctx, req.UserId, req.Amount)
+	md, _ := metadata.FromIncomingContext(ctx)
+
+	idempotencyKey := ""
+	if v := md.Get("idempotency-key"); len(v) > 0 {
+		idempotencyKey = v[0]
+	}
+
+	if idempotencyKey == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing idempotency-key")
+	}
+
+	id, err := h.svc.Create(ctx, req.UserId, req.Amount, idempotencyKey)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &orderpb.CreateOrderResponse{OrderId: id.String()}, nil
