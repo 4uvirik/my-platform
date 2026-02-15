@@ -1,0 +1,11 @@
+app:
+  name: user-service
+  env: local
+
+server:
+  host: "0.0.0.0"
+  port: "8082"
+  shutdown_timeout: 5s
+
+logger:
+  level: info

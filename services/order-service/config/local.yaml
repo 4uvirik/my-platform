@@ -17,3 +17,8 @@ kafka:
   brokers: ["localhost:9092"]
   topic_order_created: "order.created"
   group_id: "notification-service"
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0

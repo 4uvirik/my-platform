@@ -71,7 +71,7 @@ services:
       kafka:
         condition: service_started
     environment:
-      YAML_PATH: /app/config/config.yaml
+      YAML_PATH: /app/config/local.yaml
     ports:
       - "50051:50051"
       - "9101:9100"
@@ -88,7 +88,7 @@ services:
       kafka:
         condition: service_started
     environment:
-      YAML_PATH: /app/config/config.yaml
+      YAML_PATH: /app/config/local.yaml
     ports:
       - "9102:9100"
 

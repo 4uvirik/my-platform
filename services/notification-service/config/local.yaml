@@ -1,0 +1,19 @@
+app:
+  name: notification-service
+  env: local
+
+logger:
+  level: info
+  json: true
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_order_created: "order.created"
+  group_id: "notification-service"
+  consume_timeout: 10s
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
