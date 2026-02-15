@@ -11,14 +11,14 @@ logger:
   json: true
 
 db:
-  dsn: "postgres://user:pass@localhost:5432/orders?sslmode=disable"
+  dsn: ${DB_DSN}
 
 kafka:
-  brokers: ["localhost:9092"]
+  brokers: ["kafka:9092"]
   topic_order_created: "order.created"
   group_id: "notification-service"
 
 redis:
-  addr: "localhost:6379"
+  addr: "redis:6379"
   password: ""
   db: 0

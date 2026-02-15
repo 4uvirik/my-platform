@@ -8,12 +8,12 @@ logger:
 
 kafka:
   brokers:
-    - "localhost:9092"
+    - "kafka:9092"
   topic_order_created: "order.created"
   group_id: "notification-service"
   consume_timeout: 10s
 
 redis:
-  addr: "localhost:6379"
+  addr: "redis:6379"
   password: ""
   db: 0
