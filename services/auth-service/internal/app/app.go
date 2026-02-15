@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/auth-service/config"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/config"
 	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/jwt"
 	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/repository"
 	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/server/httpserver"

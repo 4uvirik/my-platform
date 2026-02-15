@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	envLocal = "local.yaml"
+	envLocal = "local"
 	envDev   = "dev"
 	envProd  = "prod"
 )

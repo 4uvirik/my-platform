@@ -19,7 +19,7 @@ type Config struct {
 
 type AppConfig struct {
 	Name string `env:"APP_NAME" yaml:"name" envDefault:"order-service"`
-	Env  string `env:"APP_ENV"  yaml:"env"  envDefault:"local.yaml"`
+	Env  string `env:"APP_ENV"  yaml:"env"  envDefault:"local"`
 }
 
 type ServerConfig struct {

@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/auth-service/config"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/app"
-	"gitlab.com/4uvirik/my-platform/services/auth-service/internal/config"
 )
 
 func main() {

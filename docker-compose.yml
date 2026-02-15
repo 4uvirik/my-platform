@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   # -------------------
@@ -62,7 +60,8 @@ services:
   # -------------------
   order-service:
     build:
-      context: ./services/order-service
+      context: .
+      dockerfile: services/order-service/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,7 +70,7 @@ services:
       kafka:
         condition: service_started
     environment:
-      YAML_PATH: /app/config/local.yaml
+      YAML_PATH: /app/config/config.yaml
     ports:
       - "50051:50051"
       - "9101:9100"
@@ -81,14 +80,15 @@ services:
   # -------------------
   notification-service:
     build:
-      context: ./services/notification-service
+      context: .
+      dockerfile: services/notification-service/Dockerfile
     depends_on:
       redis:
         condition: service_healthy
       kafka:
         condition: service_started
     environment:
-      YAML_PATH: /app/config/local.yaml
+      YAML_PATH: /app/config/config.yaml
     ports:
       - "9102:9100"
 
