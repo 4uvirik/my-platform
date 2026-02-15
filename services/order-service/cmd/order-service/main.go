@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"gitlab.com/4uvirik/my-platform/services/order-service/internal/observability"
 	"log"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -58,7 +60,12 @@ func main() {
 
 	svc := service.NewOrderService(repo, producer, orderCache, idempSvc, rateLimitSvc, logg)
 
-	grpcServer := grpc.NewServer()
+	observability.Register()
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(observability.UnaryMetricsInterceptor()),
+	)
+
 	handler := grpcHandler.NewOrderHandler(svc)
 	grpcHandler.Register(grpcServer, handler)
 
@@ -73,6 +80,13 @@ func main() {
 		if err := grpcServer.Serve(lis); err != nil {
 			logg.Error("grpc server stopped", "err", err)
 		}
+	}()
+
+	go func() {
+		http.Handle("/metrics", observability.MetricsHandler())
+		if err := http.ListenAndServe(":9100", nil); err != nil {
+			logg.Error("metrics server failed", "error", err)
+		} // порт для Prometheus
 	}()
 
 	// graceful shutdown
