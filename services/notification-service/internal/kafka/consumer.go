@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/dedup"
+	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/observability"
 	"log/slog"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 	"gitlab.com/4uvirik/my-platform/pkg/events"
@@ -37,25 +39,41 @@ func (c *Consumer) Run(ctx context.Context) error {
 			return err
 		}
 
+		start := time.Now()
+
 		var evt events.OrderCreated
 		if err := json.Unmarshal(msg.Value, &evt); err != nil {
 			c.logger.Error("failed to unmarshal event", "error", err)
-			_ = c.reader.CommitMessages(ctx, msg)
+
+			observability.KafkaErrors.Inc()
+
+			if commitErr := c.reader.CommitMessages(ctx, msg); commitErr != nil {
+				c.logger.Error("failed to commit message after unmarshal error", "err", commitErr)
+			}
 			continue
 		}
 
+		// dedup check
 		duplicated, err := c.dedup.Seen(ctx, "order_created", evt.OrderID)
 		if err != nil {
 			c.logger.Error("dedup check failed", "err", err)
+
+			observability.KafkaErrors.Inc()
 			continue
 		}
 
 		if duplicated {
 			c.logger.Warn("duplicate event skipped", "order_id", evt.OrderID)
-			_ = c.reader.CommitMessages(ctx, msg)
+
+			observability.KafkaDuplicates.Inc()
+
+			if commitErr := c.reader.CommitMessages(ctx, msg); commitErr != nil {
+				c.logger.Error("failed to commit duplicate message", "err", commitErr)
+			}
 			continue
 		}
 
+		// ---- реальная обработка события ----
 		c.logger.Info("order created event received",
 			"order_id", evt.OrderID,
 			"user_id", evt.UserID,
@@ -64,8 +82,14 @@ func (c *Consumer) Run(ctx context.Context) error {
 
 		// TODO: here will be real notification logic (email, push, etc)
 
+		// ---- метрики ----
+		observability.KafkaEventsProcessed.Inc()
+		observability.KafkaProcessingLatency.Observe(time.Since(start).Seconds())
+
+		// commit offset
 		if err := c.reader.CommitMessages(ctx, msg); err != nil {
 			c.logger.Error("failed to commit kafka message", "err", err)
+			observability.KafkaErrors.Inc()
 		}
 	}
 }

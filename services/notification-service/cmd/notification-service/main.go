@@ -4,8 +4,10 @@ import (
 	"context"
 	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/dedup"
 	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/infrastructure/redis"
+	"gitlab.com/4uvirik/my-platform/services/notification-service/internal/observability"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,9 +23,13 @@ func main() {
 	logg := initLogger(cfg)
 	slog.SetDefault(logg)
 
+	// Регистрируем метрики
+	observability.Register()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// --- Redis ---
 	redisClient, err := redis.NewClient(redis.Config{
 		Addr:     cfg.Redis.Addr,
 		Password: cfg.Redis.Password,
@@ -36,6 +42,7 @@ func main() {
 
 	dedupSvc := dedup.NewService(redisClient, 24*time.Hour)
 
+	// --- Kafka consumer ---
 	consumer, err := kafka.NewConsumer(
 		cfg.Kafka.Brokers,
 		cfg.Kafka.TopicOrderCreated,
@@ -47,12 +54,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// --- metrics HTTP server ---
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", observability.MetricsHandler())
+
+		if err := http.ListenAndServe(":9100", mux); err != nil {
+			logg.Error("metrics server failed", "err", err)
+		}
+	}()
+
+	// --- Kafka loop ---
 	go func() {
 		if err := consumer.Run(ctx); err != nil {
 			logg.Error("kafka consumer stopped with error", "error", err)
 		}
 	}()
 
+	// --- graceful shutdown ---
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
